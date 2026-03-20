@@ -2,12 +2,14 @@ html {
     background-color: #F5F5F5;
     font-family: 'Inter', sans-serif;
     color: #1D1D1D;
+    overflow: hidden;
 }
 
 .container {
     margin: 50px auto;
     max-width: 400px;
     padding: 30px;
+    margin-top: 15vh;
     background-color: transparent;
     display: flex;
     flex-direction: column;
@@ -17,7 +19,7 @@ html {
 .content{
     display: flex;
     flex-direction:row;
-    justify-content: space-between; 
+    justify-content: space-around; 
 }
 
 h2 {
@@ -48,11 +50,12 @@ h1 {
 input {
     padding: 12px;
     border: none;
+    width: 120px;
     border-radius: 10px;
     font-size: 18px;
     font-family: 'Inter', sans-serif;
     font-weight: 600;
-    background-color: #f0f0f0;
+    background-color: #ebebeb;
     outline: none;
 }
 
