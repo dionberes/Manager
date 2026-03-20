@@ -7,12 +7,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="icon" href="assets/icon.jpg">
     <link rel="stylesheet" href="frontend/style.css">
+
     <link rel="apple-touch-icon" href="assets/icon.jpg">
     <meta name="apple-mobile-web-app-title" content="Manager">
 </head>
 <body>
     <div class="container">
-        <div class="sec" style="justify-content: center; padding-right: 35px;">
+        <div class="sec" style="justify-content: center; padding-right: 35px; margin-bottom: 30px;">
             <img src="assets/ico.png" alt="Icon">
             <h2>Manager</h2>
         </div>
@@ -76,10 +77,10 @@
                     `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} h`;
 
                 if (diff > 7 * 60) {
-                    overtimeDisplay.style.color = 'red';
+                    overtimeDisplay.style.color = 'green';
                     overtimeDisplay.textContent = `+${String(hours- 7).padStart(2, '0')}:${String(minutes ).padStart(2, '0')} `;
                 } else {
-                    overtimeDisplay.style.color = 'green';
+                    overtimeDisplay.style.color = 'red';
                     overtimeDisplay.textContent = `${String(hours - 7 ).padStart(2, '0')}:${String(minutes ).padStart(2, '0')} `;
                 }
             }
