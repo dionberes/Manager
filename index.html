@@ -74,7 +74,7 @@
                 const minutes = diff % 60;
 
                 totalTimeDisplay.textContent = 
-                    `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} h`;
+                    `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 
                 if (diff > 7 * 60) {
                     overtimeDisplay.style.color = 'green';
