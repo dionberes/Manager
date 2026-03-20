@@ -98,3 +98,22 @@ img {
     width: 30px;
     height: 30px;
 }
+
+
+@media (max-width: 400px) {
+    .content {
+        display: flex;
+        flex-direction: column;
+    }
+    .container {
+        margin: 0;
+    }
+    .i-sec {
+        width: 175%;
+    }input{
+        width: 90%;
+    }
+    footer {
+        display: none;
+    }
+}
