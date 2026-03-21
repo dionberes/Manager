@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/4.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css">
+    <link rel="icon" href="assets/icon.jpg">
+    <link rel="stylesheet" href="frontend/style.css">
+    <link rel="apple-touch-icon" href="assets/icon.jpg">
+    <meta name="apple-mobile-web-app-title" content="Manager">
+</head>
+<body>
+    <div class="container">
+        <div class="sec" style="justify-content: center; padding-right: 35px; margin-bottom: 30px;">
+            <img src="assets/ico.png" alt="Icon">
+            <h2>Manager</h2>
+        </div>
+        <div class="content">
+            <div class="sec">
+                <div class="input-group">
+                    <section class="i-sec">
+                        <h1>Startzeit</h1>
+                        <input type="time" id="start-time">
+                    </section>
+                    <section class="i-sec">
+                        <h1>Endzeit</h1>
+                        <input type="time" id="end-time">
+                    </section>
+                </div>
+                
+            </div>
+            <div class="sec1">
+                <div class="result-sec">
+                    <h1>Gesamtzeit</h1>
+                    <div id="total-time">00:00</div>
+                    <div id="isOvertime">+00:00</div>
+                </div>
+            </div>
+        </div>
+        <button id="save-entry" class="save-btn">Eintrag speichern</button>
+    </div>
+
+    <div class="container" style="margin-top: 0;">
+        <div class="sec" style="justify-content: center; margin-bottom: 30px;">
+            <h2>Diese Woche</h2>
+        </div>
+        <div id="week-table"></div>
+        <section class="all-time">0h 00m</section>
+    </div>
+
+    <script>
+        const startTimeInput = document.getElementById("start-time");
+        const endTimeInput = document.getElementById("end-time");
+        const totalTimeDisplay = document.getElementById("total-time");
+        const overtimeDisplay = document.getElementById("isOvertime");
+        const weekTable = document.getElementById("week-table");
+        const allTimeDisplay = document.querySelector(".all-time");
+        const saveEntryBtn = document.getElementById("save-entry");
+
+        let totalMinutesSum = 0;
+        let currentDiff = 0;
+
+        function parseDiffFromTimes(start, end) {
+            const s = start.split(":");
+            const e = end.split(":");
+            const startMinutes = parseInt(s[0], 10) * 60 + parseInt(s[1], 10);
+            let endMinutes = parseInt(e[0], 10) * 60 + parseInt(e[1], 10);
+
+            if (endMinutes < startMinutes) {
+                endMinutes += 24 * 60;
+            }
+            return endMinutes - startMinutes;
+        }
+
+        function formatDiff(diff) {
+            const hours = Math.floor(diff / 60);
+            const minutes = diff % 60;
+            return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")} h`;
+        }
+
+        function updateAllTimeDisplay() {
+            const h = Math.floor(totalMinutesSum / 60);
+            const m = totalMinutesSum % 60;
+            allTimeDisplay.textContent = `${h}h ${String(m).padStart(2, "0")}m`;
+        }
+
+        function updatePreview() {
+            const start = startTimeInput.value;
+            const end = endTimeInput.value;
+
+            if (!start || !end) {
+                totalTimeDisplay.textContent = "00:00";
+                overtimeDisplay.textContent = "+00:00";
+                overtimeDisplay.style.color = "#bdbdbd";
+                currentDiff = 0;
+                return;
+            }
+
+            currentDiff = parseDiffFromTimes(start, end);
+            totalTimeDisplay.textContent = formatDiff(currentDiff);
+
+            const diffOvertime = currentDiff - (7 * 60);
+            const oHours = Math.floor(Math.abs(diffOvertime) / 60);
+            const oMinutes = Math.abs(diffOvertime) % 60;
+            const sign = diffOvertime >= 0 ? "+" : "-";
+
+            overtimeDisplay.style.color = diffOvertime >= 0 ? "green" : "red";
+            overtimeDisplay.textContent = `${sign}${String(oHours).padStart(2, "0")}:${String(oMinutes).padStart(2, "0")}`;
+        }
+
+        function renderEntry(entry) {
+            const tableDiv = document.createElement("div");
+            tableDiv.classList.add("table");
+            tableDiv.id = `entry-${entry.id}`;
+
+            const textSpan = document.createElement("span");
+            textSpan.textContent = `${entry.weekday}: ${formatDiff(entry.diff)}`;
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.textContent = "X";
+            deleteBtn.classList.add("btn");
+            deleteBtn.onclick = async function () {
+                await fetch(`/api/entries/${entry.id}`, { method: "DELETE" });
+                totalMinutesSum -= entry.diff;
+                updateAllTimeDisplay();
+                tableDiv.remove();
+            };
+
+            tableDiv.appendChild(textSpan);
+            tableDiv.appendChild(deleteBtn);
+            weekTable.appendChild(tableDiv);
+        }
+
+        async function loadEntries() {
+            const response = await fetch("/api/entries");
+            const entries = await response.json();
+            weekTable.innerHTML = "";
+            totalMinutesSum = 0;
+
+            entries.forEach((entry) => {
+                renderEntry(entry);
+                totalMinutesSum += entry.diff;
+            });
+
+            updateAllTimeDisplay();
+        }
+
+        async function saveEntry() {
+            const start = startTimeInput.value;
+            const end = endTimeInput.value;
+            if (!start || !end) {
+                return;
+            }
+
+            const diff = parseDiffFromTimes(start, end);
+            const weekday = new Date().toLocaleDateString("de-DE", { weekday: "long" });
+
+            const response = await fetch("/api/entries", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ start, end, diff, weekday })
+            });
+
+            const entry = await response.json();
+            renderEntry(entry);
+            totalMinutesSum += entry.diff;
+            updateAllTimeDisplay();
+
+            startTimeInput.value = "";
+            endTimeInput.value = "";
+            updatePreview();
+        }
+
+        startTimeInput.addEventListener("change", updatePreview);
+        endTimeInput.addEventListener("change", updatePreview);
+        saveEntryBtn.addEventListener("click", saveEntry);
+        loadEntries();
+    </script>
+</body>
+</html>
