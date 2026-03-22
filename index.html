@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/4.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css">
+    <link rel="icon" href="assets/icon.jpg">
+    <link rel="stylesheet" href="frontend/style.css">
+    <link rel="apple-touch-icon" href="assets/icon.jpg">
+    <meta name="apple-mobile-web-app-title" content="Manager">
+</head>
+<body>
+    <div class="container">
+        <div class="sec" style="justify-content: center; padding-right: 35px; margin-bottom: 30px;">
+            <img src="assets/ico.png" alt="Icon">
+            <h2>Manager</h2>
+        </div>
+        <div class="content">
+            <div class="sec">
+                <div class="input-group">
+                    <section class="i-sec">
+                        <h1>Startzeit</h1>
+                        <input type="time" id="start-time">
+                    </section>
+                    <section class="i-sec">
+                        <h1>Endzeit</h1>
+                        <input type="time" id="end-time">
+                    </section>
+                </div>
+                
+            </div>
+            <div class="sec1">
+                <div class="result-sec">
+                    <h1>Gesamtzeit</h1>
+                    <div id="total-time">00:00</div>
+                    <div id="isOvertime">+00:00</div>
+                </div>
+            </div>
+        </div>
+        <button id="save-entry" class="save-btn">Eintrag speichern</button>
+    </div>
+
+    <div class="container" style="margin-top: 0;">
+        <div class="sec" style="justify-content: center; margin-bottom: 30px;">
+            <h2>Diese Woche</h2>
+        </div>
+        <div id="week-table"></div>
+        <section class="all-time">0h 00m</section>
+    </div>
+
+    <script src="backend/LocalStorage.js"></script>
+</body>
+</html>
