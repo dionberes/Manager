@@ -23,12 +23,11 @@ html {
 
 .progress {
     border-radius: 50px;
-    background-color: #000; 
     height: 10px;
     transform: scaleX(-1)
 }
 .progress::-webkit-progress-bar {
-    background-color: rgb(40, 195, 40);
+    background: linear-gradient(to right, rgb(40, 195, 40), rgb(0, 110, 4));
     border-radius: 50px;
 }
 .progress::-webkit-progress-value {
