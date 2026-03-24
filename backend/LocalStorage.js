@@ -5,11 +5,73 @@ const overtimeDisplay = document.getElementById("isOvertime");
 const weekTable = document.getElementById("week-table");
 const allTimeDisplay = document.querySelector(".all-time");
 const saveEntryBtn = document.getElementById("save-entry");
+const workProgressEl = document.getElementById("work-progress");
 
 const STORAGE_KEY = "manager-time-entries-v1";
+const SETTINGS_KEY = "manager-settings-v1";
+
+const settingsModal = document.getElementById("settings-modal");
+const settingsBackdrop = document.getElementById("settings-modal-backdrop");
+const openSettingsBtn = document.getElementById("open-settings");
+const targetHoursInput = document.getElementById("target-hours-input");
+const settingsSaveBtn = document.getElementById("settings-save");
+const settingsCancelBtn = document.getElementById("settings-cancel");
+
+const DEFAULT_TARGET_HOURS = 7;
+const MIN_TARGET_HOURS = 0.25;
+const MAX_TARGET_HOURS = 24;
 
 let totalMinutesSum = 0;
 let currentDiff = 0;
+let targetHours = DEFAULT_TARGET_HOURS;
+
+function loadSettings() {
+    try {
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        if (!raw) return { targetHours: DEFAULT_TARGET_HOURS };
+        const parsed = JSON.parse(raw);
+        let h = Number(parsed.targetHours);
+        if (!Number.isFinite(h) || h <= 0) h = DEFAULT_TARGET_HOURS;
+        h = Math.min(MAX_TARGET_HOURS, Math.max(MIN_TARGET_HOURS, h));
+        return { targetHours: h };
+    } catch {
+        return { targetHours: DEFAULT_TARGET_HOURS };
+    }
+}
+
+function saveSettings(settings) {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function getTargetMinutes() {
+    return targetHours * 60;
+}
+
+function applyTargetToProgressUi() {
+    workProgressEl.max = targetHours;
+    workProgressEl.min = 0;
+}
+
+function openSettingsModal() {
+    targetHoursInput.value = String(targetHours);
+    settingsModal.hidden = false;
+    targetHoursInput.focus();
+}
+
+function closeSettingsModal() {
+    settingsModal.hidden = true;
+}
+
+function persistTargetFromInput() {
+    let h = parseFloat(targetHoursInput.value);
+    if (!Number.isFinite(h)) h = DEFAULT_TARGET_HOURS;
+    h = Math.min(MAX_TARGET_HOURS, Math.max(MIN_TARGET_HOURS, h));
+    targetHours = h;
+    saveSettings({ targetHours: targetHours });
+    applyTargetToProgressUi();
+    closeSettingsModal();
+    updatePreview();
+}
 
 function loadFromStorage() {
     try {
@@ -53,25 +115,30 @@ function updateAllTimeDisplay() {
 function updatePreview() {
     const start = startTimeInput.value;
     const end = endTimeInput.value;
+    const targetMinutes = getTargetMinutes();
 
     if (!start || !end) {
         totalTimeDisplay.textContent = "00:00";
         overtimeDisplay.textContent = "+00:00";
         overtimeDisplay.style.color = "#bdbdbd";
         currentDiff = 0;
+        workProgressEl.value = targetHours;
         return;
     }
 
     currentDiff = parseDiffFromTimes(start, end);
     totalTimeDisplay.textContent = formatDiff(currentDiff);
 
-    const diffOvertime = currentDiff - (7 * 60);
+    const diffOvertime = currentDiff - targetMinutes;
     const oHours = Math.floor(Math.abs(diffOvertime) / 60);
     const oMinutes = Math.abs(diffOvertime) % 60;
     const sign = diffOvertime >= 0 ? "+" : "-";
 
     overtimeDisplay.style.color = diffOvertime >= 0 ? "green" : "red";
     overtimeDisplay.textContent = `${sign}${String(oHours).padStart(2, "0")}:${String(oMinutes).padStart(2, "0")}`;
+
+    const remainingMinutes = Math.max(0, targetMinutes - currentDiff);
+    workProgressEl.value = remainingMinutes / 60;
 }
 
 function renderEntry(entry) {
@@ -143,7 +210,22 @@ function saveEntry() {
     updatePreview();
 }
 
+targetHours = loadSettings().targetHours;
+applyTargetToProgressUi();
+
 startTimeInput.addEventListener("change", updatePreview);
 endTimeInput.addEventListener("change", updatePreview);
 saveEntryBtn.addEventListener("click", saveEntry);
+
+openSettingsBtn.addEventListener("click", openSettingsModal);
+settingsCancelBtn.addEventListener("click", closeSettingsModal);
+settingsBackdrop.addEventListener("click", closeSettingsModal);
+settingsSaveBtn.addEventListener("click", persistTargetFromInput);
+
+targetHoursInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") persistTargetFromInput();
+    if (e.key === "Escape") closeSettingsModal();
+});
+
 loadEntries();
+updatePreview();
