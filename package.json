@@ -1,0 +1,9 @@
+{
+  "name": "Manager Time App",
+  "version": "1.0.4",
+  "private": true,
+  
+  "backend": {
+    "file": "LocalStorage.js"
+  }
+}
