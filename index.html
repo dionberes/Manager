@@ -6,6 +6,7 @@
     <title>Manager</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn-uicons.flaticon.com/4.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css">
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/4.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
     <link rel="icon" href="assets/icon.jpg">
     <link rel="stylesheet" href="frontend/style.css">
     <link rel="apple-touch-icon" href="assets/icon.jpg">
@@ -13,9 +14,12 @@
 </head>
 <body>
     <div class="container">
-        <div class="sec" style="justify-content: center; padding-right: 35px; margin-bottom: 30px;">
-            <img src="assets/ico.png" alt="Icon">
-            <h2>Manager</h2>
+        <div class="sec header-bar">
+            <div class="header-title">
+                <img src="assets/ico.png" alt="Icon">
+                <h2>Manager</h2>
+            </div>
+            <button type="button" id="open-settings" class="icon-btn" title="Soll-Arbeitszeit"><i class="fi fi-sr-time-add"></i></button>
         </div>
         <div class="content">
             <div class="sec">
@@ -36,6 +40,7 @@
                     <h1>Gesamtzeit</h1>
                     <div id="total-time">00:00</div>
                     <div id="isOvertime">+00:00</div>
+                    <progress class="progress" id="work-progress" min="0" max="7" value="7" aria-label="Verbleibend bis Sollzeit"></progress>
                 </div>
             </div>
         </div>
@@ -48,6 +53,20 @@
         </div>
         <div id="week-table"></div>
         <section class="all-time">0h 00m</section>
+    </div>
+
+    <div id="settings-modal" class="modal" hidden>
+        <div class="modal-backdrop" id="settings-modal-backdrop"></div>
+        <div class="modal-dialog" role="dialog" aria-labelledby="settings-title">
+            <h3 id="settings-title">Zeitziel</h3>
+            <p class="modal-hint">Tägliches Zeitziel zum Erreichen.</p>
+            <label class="modal-label" for="target-hours-input">Stunden pro Tag</label>
+            <input type="number" id="target-hours-input" min="0.25" max="24" step="0.25" value="7">
+            <div class="modal-actions">
+                <button type="button" id="settings-cancel" class="modal-btn secondary">Abbrechen</button>
+                <button type="button" id="settings-save" class="modal-btn primary">Speichern</button>
+            </div>
+        </div>
     </div>
 
     <script src="backend/LocalStorage.js"></script>
