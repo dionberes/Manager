@@ -1,6 +1,6 @@
 {
-  "name": "Manager Time App",
-  "version": "1.0.4",
+  "name": "Time Manager",
+  "version": "2.2.1",
   "private": true,
   
   "backend": {
