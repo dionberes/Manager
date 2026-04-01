@@ -4,8 +4,130 @@ const totalTimeDisplay = document.getElementById("total-time");
 const overtimeDisplay = document.getElementById("isOvertime");
 const weekTable = document.getElementById("week-table");
 const allTimeDisplay = document.querySelector(".all-time");
+const weekOvertimeDisplay = document.querySelector(".week-overtime");
 const saveEntryBtn = document.getElementById("save-entry");
 const workProgressEl = document.getElementById("work-progress");
+const weekdayCheckboxes = document.querySelectorAll(".weekday-checkbox");
+
+const ctx = document.getElementById("myCustomChart").getContext("2d");
+const weekdayConfig = [
+    { full: 'Montag', short: 'Mo' },
+    { full: 'Dienstag', short: 'Di' },
+    { full: 'Mittwoch', short: 'Mi' },
+    { full: 'Donnerstag', short: 'Do' },
+    { full: 'Freitag', short: 'Fr' },
+    { full: 'Samstag', short: 'Sa' },
+    { full: 'Sonntag', short: 'So' }
+];
+
+const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+gradient.addColorStop(0, '#ff59596d');
+gradient.addColorStop(1, '#ff595900');
+
+function getWeekdayIndex(date) {
+    const jsDay = date.getDay();
+    return (jsDay + 6) % 7; // Monday = 0
+}
+
+function getWeekStart(date) {
+    const copy = new Date(date);
+    copy.setHours(0, 0, 0, 0);
+    copy.setDate(copy.getDate() - getWeekdayIndex(copy));
+    return copy;
+}
+
+function isSameWeek(dateA, dateB) {
+    return getWeekStart(dateA).getTime() === getWeekStart(dateB).getTime();
+}
+
+function buildWeeklyChartData(entries) {
+    const values = selectedWeekdays.map(() => 0);
+    const today = new Date();
+
+    entries.forEach((entry) => {
+        const entryDate = new Date(entry.createdAt);
+        if (!isSameWeek(entryDate, today)) return;
+        if (!selectedWeekdays.includes(entry.weekday)) return;
+        if (!Number.isFinite(entry.diff)) return;
+
+        const index = selectedWeekdays.indexOf(entry.weekday);
+        if (index < 0) return;
+
+        values[index] += entry.diff / 60;
+    });
+
+    return values;
+}
+
+function updateWeekChart(entries) {
+    weekChart.data.labels = getSelectedWeekdayShortLabels();
+    weekChart.data.datasets[0].data = buildWeeklyChartData(entries);
+    weekChart.update();
+}
+
+const chartConfig = {
+    type: 'line',
+    data: {
+        labels: weekdayConfig.map((item) => item.short),
+        datasets: [{
+            label: 'Aktivität',
+            data: [0, 0, 0, 0, 0, 0, 0],
+            fill: true,
+            backgroundColor: gradient,
+            borderColor: '#FF5959',
+            borderWidth: 4,
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: '#FF5959',
+            pointBorderWidth: 1,
+            pointRadius: 5,
+            pointHoverRadius: 8,
+            tension: .2
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            x: {
+                grid: { display: true },
+                ticks: {
+                    color: 'fddcdc',
+                }
+            },
+            y: {
+                display: false,
+                suggestedMin: 0,
+                suggestedMax: 10
+            }
+        },
+        layout: {
+            padding: {
+                top: 20
+            }
+        }
+    },
+    plugins: [{
+        id: 'customCircle',
+        afterDraw: (chart) => {
+            const { ctx, data, scales: { x, y } } = chart;
+            const lastPointIndex = data.datasets[0].data.length - 1;
+            const xPos = x.getPixelForValue(lastPointIndex);
+            const yPos = y.getPixelForValue(data.datasets[0].data[lastPointIndex]);
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(xPos, yPos, 12, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'transparent';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+        }
+    }]
+};
+
+const weekChart = new Chart(ctx, chartConfig);
 
 const STORAGE_KEY = "manager-time-entries-v1";
 const SETTINGS_KEY = "manager-settings-v1";
@@ -16,6 +138,10 @@ const openSettingsBtn = document.getElementById("open-settings");
 const targetHoursInput = document.getElementById("target-hours-input");
 const settingsSaveBtn = document.getElementById("settings-save");
 const settingsCancelBtn = document.getElementById("settings-cancel");
+
+const DEFAULT_WORKDAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
+
+let selectedWeekdays = [...DEFAULT_WORKDAYS];
 
 const DEFAULT_TARGET_HOURS = 7;
 const MIN_TARGET_HOURS = 0.25;
@@ -28,14 +154,22 @@ let targetHours = DEFAULT_TARGET_HOURS;
 function loadSettings() {
     try {
         const raw = localStorage.getItem(SETTINGS_KEY);
-        if (!raw) return { targetHours: DEFAULT_TARGET_HOURS };
+        if (!raw) return { targetHours: DEFAULT_TARGET_HOURS, selectedWeekdays: [...DEFAULT_WORKDAYS] };
         const parsed = JSON.parse(raw);
         let h = Number(parsed.targetHours);
         if (!Number.isFinite(h) || h <= 0) h = DEFAULT_TARGET_HOURS;
         h = Math.min(MAX_TARGET_HOURS, Math.max(MIN_TARGET_HOURS, h));
-        return { targetHours: h };
+
+        const weekdays = Array.isArray(parsed.selectedWeekdays)
+            ? parsed.selectedWeekdays.filter((day) => weekdayConfig.some((item) => item.full === day))
+            : [...DEFAULT_WORKDAYS];
+
+        return {
+            targetHours: h,
+            selectedWeekdays: weekdays.length > 0 ? weekdays : [...DEFAULT_WORKDAYS]
+        };
     } catch {
-        return { targetHours: DEFAULT_TARGET_HOURS };
+        return { targetHours: DEFAULT_TARGET_HOURS, selectedWeekdays: [...DEFAULT_WORKDAYS] };
     }
 }
 
@@ -47,6 +181,19 @@ function getTargetMinutes() {
     return targetHours * 60;
 }
 
+function getSelectedWeekdayShortLabels() {
+    return selectedWeekdays.map((fullDay) => {
+        const item = weekdayConfig.find((d) => d.full === fullDay);
+        return item ? item.short : fullDay.slice(0, 2);
+    });
+}
+
+function applySelectedWeekdayCheckboxes() {
+    weekdayCheckboxes.forEach((checkbox) => {
+        checkbox.checked = selectedWeekdays.includes(checkbox.value);
+    });
+}
+
 function applyTargetToProgressUi() {
     workProgressEl.max = targetHours;
     workProgressEl.min = 0;
@@ -54,6 +201,7 @@ function applyTargetToProgressUi() {
 
 function openSettingsModal() {
     targetHoursInput.value = String(targetHours);
+    applySelectedWeekdayCheckboxes();
     settingsModal.hidden = false;
     targetHoursInput.focus();
 }
@@ -67,9 +215,17 @@ function persistTargetFromInput() {
     if (!Number.isFinite(h)) h = DEFAULT_TARGET_HOURS;
     h = Math.min(MAX_TARGET_HOURS, Math.max(MIN_TARGET_HOURS, h));
     targetHours = h;
-    saveSettings({ targetHours: targetHours });
+
+    const selected = Array.from(weekdayCheckboxes)
+        .filter((checkbox) => checkbox.checked)
+        .map((checkbox) => checkbox.value);
+
+    selectedWeekdays = selected.length > 0 ? selected : [...DEFAULT_WORKDAYS];
+
+    saveSettings({ targetHours: targetHours, selectedWeekdays });
     applyTargetToProgressUi();
     closeSettingsModal();
+    loadEntries();
     updatePreview();
 }
 
@@ -110,6 +266,18 @@ function updateAllTimeDisplay() {
     const h = Math.floor(totalMinutesSum / 60);
     const m = totalMinutesSum % 60;
     allTimeDisplay.textContent = `${h}h ${String(m).padStart(2, "0")}m`;
+
+    if (weekOvertimeDisplay) {
+        const activeDays = selectedWeekdays.length;
+        const weeklyTargetMinutes = targetHours * activeDays * 60;
+        const weekDiff = totalMinutesSum - weeklyTargetMinutes;
+        const absHours = Math.floor(Math.abs(weekDiff) / 60);
+        const absMinutes = Math.abs(weekDiff) % 60;
+        const sign = weekDiff >= 0 ? "+" : "-";
+
+        weekOvertimeDisplay.textContent = `Überstunden diese Woche: ${sign}${String(absHours).padStart(2, "0")}:${String(absMinutes).padStart(2, "0")}`;
+        weekOvertimeDisplay.style.color = weekDiff >= 0 ? "green" : "red";
+    }
 }
 
 function updatePreview() {
@@ -150,14 +318,12 @@ function renderEntry(entry) {
     textSpan.textContent = `${entry.weekday}: ${formatDiff(entry.diff)}`;
 
     const deleteBtn = document.createElement("button");
-    deleteBtn.textContent = "X";
+    deleteBtn.textContent = "×";
     deleteBtn.classList.add("btn");
     deleteBtn.onclick = function () {
         const entries = loadFromStorage().filter((e) => e.id !== entry.id);
         saveToStorage(entries);
-        totalMinutesSum -= entry.diff;
-        updateAllTimeDisplay();
-        tableDiv.remove();
+        loadEntries();
     };
 
     tableDiv.appendChild(textSpan);
@@ -167,15 +333,19 @@ function renderEntry(entry) {
 
 function loadEntries() {
     const entries = loadFromStorage();
+    const currentWeekEntries = entries.filter((entry) => isSameWeek(new Date(entry.createdAt), new Date()));
+    const visibleEntries = currentWeekEntries.filter((entry) => selectedWeekdays.includes(entry.weekday));
+
     weekTable.innerHTML = "";
     totalMinutesSum = 0;
 
-    entries.forEach((entry) => {
+    visibleEntries.forEach((entry) => {
         renderEntry(entry);
         totalMinutesSum += entry.diff;
     });
 
     updateAllTimeDisplay();
+    updateWeekChart(entries);
 }
 
 function saveEntry() {
@@ -201,26 +371,26 @@ function saveEntry() {
     entries.push(entry);
     saveToStorage(entries);
 
-    renderEntry(entry);
-    totalMinutesSum += entry.diff;
-    updateAllTimeDisplay();
+    loadEntries();
 
     startTimeInput.value = "";
     endTimeInput.value = "";
     updatePreview();
 }
 
-targetHours = loadSettings().targetHours;
+const settings = loadSettings();
+selectedWeekdays = settings.selectedWeekdays;
+targetHours = settings.targetHours;
 applyTargetToProgressUi();
 
 startTimeInput.addEventListener("change", updatePreview);
 endTimeInput.addEventListener("change", updatePreview);
 saveEntryBtn.addEventListener("click", saveEntry);
 
-openSettingsBtn.addEventListener("click", openSettingsModal);
-settingsCancelBtn.addEventListener("click", closeSettingsModal);
-settingsBackdrop.addEventListener("click", closeSettingsModal);
-settingsSaveBtn.addEventListener("click", persistTargetFromInput);
+if (openSettingsBtn) openSettingsBtn.addEventListener("click", openSettingsModal);
+if (settingsCancelBtn) settingsCancelBtn.addEventListener("click", closeSettingsModal);
+if (settingsBackdrop) settingsBackdrop.addEventListener("click", closeSettingsModal);
+if (settingsSaveBtn) settingsSaveBtn.addEventListener("click", persistTargetFromInput);
 
 targetHoursInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") persistTargetFromInput();
