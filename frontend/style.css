@@ -1,9 +1,27 @@
 html {
-    background-color: #F5F5F5;
+    background-color: #EBEDEC;
     font-family: 'Inter', sans-serif;
     color: #1D1D1D;
+    scroll-behavior: smooth;
+}
+    
+
+body {
+    margin: 0;
+    padding: 0;
+    height: 120vh;
 }
 
+.sec-header-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    align-items: center;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    width: 100%;
+    margin-bottom: 30px;
+    padding-right: 0;
+}
 .container {
     margin: 50px auto;
     max-width: 400px;
@@ -12,8 +30,6 @@ html {
     background-color: transparent;
     display: flex;
     flex-direction: column;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
 }
 .content{
     display: flex;
@@ -35,9 +51,7 @@ html {
     border-radius: 50px;
 }
 h2 {
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-weight: 600;
     margin-bottom: 20px;
     text-align: center;
 }
@@ -48,7 +62,7 @@ h2 {
     margin: 10px 0;
     padding: 15px;
     border: 1px solid #eee;
-    border-radius: 15px;
+    border-radius: 5px;
 }
 
 h1 {
@@ -67,10 +81,8 @@ input {
     font-size: 18px;
     font-family: 'Inter', sans-serif;
     font-weight: 600;
-    background-color: #ebebeb;
+    background-color: #ffffff;
     outline: none;
-
-
 }
 .result-sec {
     height: auto;
@@ -98,9 +110,7 @@ input {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 12px;
-    flex: 1;
-    justify-content: center;
+    justify-content: start;
 }
 
 .header-bar .icon-btn {
@@ -151,8 +161,8 @@ input {
 .modal-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(5px);
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(20px);
 }
 
 .modal-dialog {
@@ -185,6 +195,21 @@ input {
     text-transform: uppercase;
     color: #888;
     margin-bottom: 6px;
+}
+
+.weekday-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(60px, 1fr));
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.weekday-checkboxes label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.95rem;
+    color: #333;
 }
 
 .modal-dialog input[type="number"] {
@@ -301,4 +326,60 @@ img {
     input{width: 70vw;}
     footer {display: none;}
     .result-sec {width: 100vw;}
+}
+
+.fo-he {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    background: #ebedec80;    
+    backdrop-filter: blur(20px);
+    border-top: 1px solid #CDCDCD;
+    height: 78px;
+    z-index: 10;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #888;
+}
+.fo-he a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    width: 80px;
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.fo-he i {
+    font-size: 25px;
+    color: #888;
+    transition: all 0.45s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.fo-he a:hover i {
+    color: black;
+}
+
+.fo-he h3 {
+    font-size: 15px;
+    margin: 0;
+    font-weight: 400;
+    color: #888;
+}
+
+.fo-he a:hover h3 {
+    color: black;
+}
+.fo-he a button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
