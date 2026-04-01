@@ -14,7 +14,7 @@ This is the new and improved version of the App/WebApp.
   
 	  + New UI,UIX
 	  + New Backend system
-    + added a chart showing the spent time
+      + added a chart showing the spent time
 	  + New Mobile System
 </div>
 <h5>v2.2.1</h5>
